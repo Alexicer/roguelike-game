@@ -1,0 +1,870 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地牢探险 - Roguelike Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #f59e0b;
+            text-shadow: 0 0 10px #f59e0b;
+            margin-bottom: 10px;
+        }
+        
+        .game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .game-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        #game-map {
+            font-size: 18px;
+            line-height: 1.1;
+            letter-spacing: 2px;
+            white-space: pre;
+            font-family: monospace;
+            user-select: none;
+        }
+        
+        .stats-panel {
+            min-width: 250px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #374151;
+        }
+        
+        .stat-label {
+            color: #9ca3af;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+        }
+        
+        .hp-bar {
+            width: 100%;
+            height: 20px;
+            background: #374151;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            transition: width 0.3s;
+        }
+        
+        .log-panel {
+            width: 100%;
+            max-width: 800px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            padding: 4px 8px;
+            border-bottom: 1px solid #374151;
+        }
+        
+        .log-entry.player {
+            color: #10b981;
+        }
+        
+        .log-entry.enemy {
+            color: #ef4444;
+        }
+        
+        .log-entry.item {
+            color: #f59e0b;
+        }
+        
+        .log-entry.level {
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .controls p {
+            margin: 5px 0;
+            color: #9ca3af;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        
+        .legend-char {
+            font-size: 16px;
+        }
+        
+        #start-btn, #restart-btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        #start-btn:hover, #restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 3px solid #ef4444;
+            z-index: 100;
+            display: none;
+        }
+        
+        .game-over h2 {
+            color: #ef4444;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .game-over .final-stats {
+            margin: 20px 0;
+            color: #9ca3af;
+        }
+        
+        .inventory {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .inventory-item {
+            background: #374151;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .inventory-item.weapon {
+            border: 1px solid #f59e0b;
+        }
+        
+        .inventory-item.armor {
+            border: 1px solid #3b82f6;
+        }
+        
+        .inventory-item.potion {
+            border: 1px solid #10b981;
+        }
+        
+        @media (max-width: 768px) {
+            #game-map {
+                font-size: 14px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🏰 地牢探险 🏰</h1>
+    
+    <div id="start-screen">
+        <p style="margin: 20px 0; color: #9ca3af;">一个经典的肉鸽地牢探险游戏</p>
+        <button id="start-btn">开始冒险</button>
+    </div>
+    
+    <div class="game-container" id="game-container" style="display: none;">
+        <div class="game-panel">
+            <div id="game-map"></div>
+        </div>
+        
+        <div class="game-panel stats-panel">
+            <h3 style="color: #3b82f6; margin-bottom: 15px;">角色状态</h3>
+            
+            <div class="stat-row">
+                <span class="stat-label">楼层</span>
+                <span class="stat-value" id="floor">1</span>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">等级</span>
+                <span class="stat-value" id="level">1</span>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">经验</span>
+                <span class="stat-value" id="exp">0/10</span>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">生命值</span>
+                <span class="stat-value" id="hp">100/100</span>
+            </div>
+            <div class="hp-bar">
+                <div class="hp-fill" id="hp-bar" style="width: 100%"></div>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">攻击力</span>
+                <span class="stat-value" id="atk">10</span>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">防御力</span>
+                <span class="stat-value" id="def">5</span>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">金币</span>
+                <span class="stat-value" id="gold">0</span>
+            </div>
+            
+            <h4 style="color: #9ca3af; margin-top: 15px;">装备</h4>
+            <div class="inventory" id="inventory"></div>
+            
+            <h4 style="color: #9ca3af; margin-top: 15px;">图例</h4>
+            <div class="legend">
+                <div class="legend-item"><span class="legend-char">🧙</span> 玩家</div>
+                <div class="legend-item"><span class="legend-char">👹</span> 哥布林</div>
+                <div class="legend-item"><span class="legend-char">💀</span> 骷髅</div>
+                <div class="legend-item"><span class="legend-char">🐉</span> 恶龙</div>
+                <div class="legend-item"><span class="legend-char">🧪</span> 药水</div>
+                <div class="legend-item"><span class="legend-char">⚔️</span> 武器</div>
+                <div class="legend-item"><span class="legend-char">🛡️</span> 护甲</div>
+                <div class="legend-item"><span class="legend-char">💰</span> 金币</div>
+                <div class="legend-item"><span class="legend-char">🚪</span> 出口</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-panel log-panel" id="log-panel" style="display: none;">
+        <h4 style="color: #3b82f6; margin-bottom: 10px;">战斗日志</h4>
+        <div id="log"></div>
+    </div>
+    
+    <div class="controls" id="controls" style="display: none;">
+        <p>方向键 或 WASD 移动 | 空格键 使用药水</p>
+        <p>移动到敌人位置进行攻击 | 找到出口进入下一层</p>
+    </div>
+    
+    <div class="game-over" id="game-over">
+        <h2>游戏结束</h2>
+        <div class="final-stats" id="final-stats"></div>
+        <button id="restart-btn">再次挑战</button>
+    </div>
+
+    <script>
+        // 游戏配置
+        const CONFIG = {
+            MAP_WIDTH: 40,
+            MAP_HEIGHT: 20,
+            ROOM_MIN_SIZE: 4,
+            ROOM_MAX_SIZE: 8,
+            MAX_ROOMS: 10,
+            NUM_ENEMIES: 5,
+            NUM_ITEMS: 4
+        };
+
+        // 游戏状态
+        let game = {
+            map: [],
+            player: null,
+            enemies: [],
+            items: [],
+            floor: 1,
+            level: 1,
+            exp: 0,
+            expToLevel: 10,
+            hp: 100,
+            maxHp: 100,
+            atk: 10,
+            def: 5,
+            gold: 0,
+            inventory: [],
+            gameOver: false,
+            potions: 0
+        };
+
+        // 怪物类型
+        const ENEMY_TYPES = [
+            { name: '哥布林', char: '👹', hp: 20, atk: 5, def: 2, exp: 5, gold: 10 },
+            { name: '骷髅', char: '💀', hp: 30, atk: 8, def: 3, exp: 8, gold: 15 },
+            { name: '恶龙', char: '🐉', hp: 50, atk: 15, def: 8, exp: 20, gold: 50 }
+        ];
+
+        // 物品类型
+        const ITEM_TYPES = [
+            { name: '治疗药水', char: '🧪', type: 'potion', effect: 'hp', value: 30 },
+            { name: '铁剑', char: '⚔️', type: 'weapon', effect: 'atk', value: 5 },
+            { name: '铁甲', char: '🛡️', type: 'armor', effect: 'def', value: 3 },
+            { name: '金币堆', char: '💰', type: 'gold', effect: 'gold', value: 20 }
+        ];
+
+        // 房间类
+        class Room {
+            constructor(x, y, w, h) {
+                this.x = x;
+                this.y = y;
+                this.w = w;
+                this.h = h;
+            }
+            
+            get center() {
+                return { x: Math.floor(this.x + this.w / 2), y: Math.floor(this.y + this.h / 2) };
+            }
+        }
+
+        // 初始化游戏
+        function initGame() {
+            game = {
+                map: [],
+                player: null,
+                enemies: [],
+                items: [],
+                floor: 1,
+                level: 1,
+                exp: 0,
+                expToLevel: 10,
+                hp: 100,
+                maxHp: 100,
+                atk: 10,
+                def: 5,
+                gold: 0,
+                inventory: [],
+                gameOver: false,
+                potions: 0
+            };
+            
+            generateFloor();
+            updateUI();
+        }
+
+        // 生成楼层
+        function generateFloor() {
+            // 清空
+            game.map = [];
+            game.enemies = [];
+            game.items = [];
+            
+            // 初始化地图（墙壁）
+            for (let y = 0; y < CONFIG.MAP_HEIGHT; y++) {
+                game.map[y] = [];
+                for (let x = 0; x < CONFIG.MAP_WIDTH; x++) {
+                    game.map[y][x] = '🧱';
+                }
+            }
+            
+            // 生成房间
+            const rooms = [];
+            for (let i = 0; i < CONFIG.MAX_ROOMS; i++) {
+                const w = randomInt(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE);
+                const h = randomInt(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE);
+                const x = randomInt(1, CONFIG.MAP_WIDTH - w - 1);
+                const y = randomInt(1, CONFIG.MAP_HEIGHT - h - 1);
+                
+                const room = new Room(x, y, w, h);
+                
+                // 检查是否重叠
+                let overlap = false;
+                for (const r of rooms) {
+                    if (x < r.x + r.w + 1 && x + w + 1 > r.x &&
+                        y < r.y + r.h + 1 && y + h + 1 > r.y) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                
+                if (!overlap) {
+                    rooms.push(room);
+                    carveRoom(room);
+                }
+            }
+            
+            // 连接房间
+            for (let i = 1; i < rooms.length; i++) {
+                const prev = rooms[i - 1].center;
+                const curr = rooms[i].center;
+                
+                if (Math.random() < 0.5) {
+                    carveHCorridor(prev.x, curr.x, prev.y);
+                    carveVCorridor(prev.y, curr.y, curr.x);
+                } else {
+                    carveVCorridor(prev.y, curr.y, prev.x);
+                    carveHCorridor(prev.x, curr.x, curr.y);
+                }
+            }
+            
+            // 放置玩家
+            if (rooms.length > 0) {
+                const startRoom = rooms[0];
+                const center = startRoom.center;
+                game.player = { x: center.x, y: center.y };
+                game.map[center.y][center.x] = '🧙';
+            }
+            
+            // 放置出口（在最后一个房间）
+            if (rooms.length > 1) {
+                const lastRoom = rooms[rooms.length - 1];
+                const exitPos = lastRoom.center;
+                game.exit = { x: exitPos.x, y: exitPos.y };
+                game.map[exitPos.y][exitPos.x] = '🚪';
+            }
+            
+            // 放置敌人
+            const numEnemies = CONFIG.NUM_ENEMIES + game.floor;
+            for (let i = 0; i < numEnemies; i++) {
+                placeEnemy(rooms);
+            }
+            
+            // 放置物品
+            const numItems = CONFIG.NUM_ITEMS + Math.floor(game.floor / 2);
+            for (let i = 0; i < numItems; i++) {
+                placeItem(rooms);
+            }
+            
+            addLog('进入第 ' + game.floor + ' 层', 'level');
+        }
+
+        // 挖掘房间
+        function carveRoom(room) {
+            for (let y = room.y; y < room.y + room.h; y++) {
+                for (let x = room.x; x < room.x + room.w; x++) {
+                    if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) {
+                        game.map[y][x] = '⬛';
+                    }
+                }
+            }
+        }
+
+        // 挖掘走廊
+        function carveHCorridor(x1, x2, y) {
+            const start = Math.min(x1, x2);
+            const end = Math.max(x1, x2);
+            for (let x = start; x <= end; x++) {
+                if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) {
+                    game.map[y][x] = '⬛';
+                }
+            }
+        }
+
+        function carveVCorridor(y1, y2, x) {
+            const start = Math.min(y1, y2);
+            const end = Math.max(y1, y2);
+            for (let y = start; y <= end; y++) {
+                if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) {
+                    game.map[y][x] = '⬛';
+                }
+            }
+        }
+
+        // 放置敌人
+        function placeEnemy(rooms) {
+            const pos = getRandomFloorTile(rooms);
+            if (pos) {
+                // 根据楼层选择敌人类型
+                let typeIndex = 0;
+                if (game.floor >= 3) typeIndex = randomInt(0, 2);
+                else if (game.floor >= 2) typeIndex = randomInt(0, 1);
+                
+                const type = ENEMY_TYPES[typeIndex];
+                const enemy = {
+                    x: pos.x,
+                    y: pos.y,
+                    name: type.name,
+                    char: type.char,
+                    hp: type.hp + game.floor * 5,
+                    maxHp: type.hp + game.floor * 5,
+                    atk: type.atk + game.floor * 2,
+                    def: type.def + game.floor,
+                    exp: type.exp + game.floor,
+                    gold: type.gold + game.floor * 5
+                };
+                game.enemies.push(enemy);
+                game.map[pos.y][pos.x] = enemy.char;
+            }
+        }
+
+        // 放置物品
+        function placeItem(rooms) {
+            const pos = getRandomFloorTile(rooms);
+            if (pos) {
+                const typeIndex = randomInt(0, ITEM_TYPES.length - 1);
+                const type = ITEM_TYPES[typeIndex];
+                const item = {
+                    x: pos.x,
+                    y: pos.y,
+                    name: type.name,
+                    char: type.char,
+                    type: type.type,
+                    effect: type.effect,
+                    value: type.value + game.floor * 5
+                };
+                game.items.push(item);
+                game.map[pos.y][pos.x] = item.char;
+            }
+        }
+
+        // 获取随机地板位置
+        function getRandomFloorTile(rooms) {
+            for (let i = 0; i < 100; i++) {
+                const roomIndex = randomInt(0, rooms.length - 1);
+                const room = rooms[roomIndex];
+                const x = randomInt(room.x, room.x + room.w - 1);
+                const y = randomInt(room.y, room.y + room.h - 1);
+                
+                if (game.map[y][x] === '⬛') {
+                    return { x, y };
+                }
+            }
+            return null;
+        }
+
+        // 随机数
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // 移动玩家
+        function movePlayer(dx, dy) {
+            if (game.gameOver) return;
+            
+            const newX = game.player.x + dx;
+            const newY = game.player.y + dy;
+            
+            // 边界检查
+            if (newX < 0 || newX >= CONFIG.MAP_WIDTH || newY < 0 || newY >= CONFIG.MAP_HEIGHT) return;
+            
+            const tile = game.map[newY][newX];
+            
+            // 墙壁
+            if (tile === '🧱') return;
+            
+            // 敌人
+            const enemyIndex = game.enemies.findIndex(e => e.x === newX && e.y === newY);
+            if (enemyIndex >= 0) {
+                combat(enemyIndex);
+                return;
+            }
+            
+            // 物品
+            const itemIndex = game.items.findIndex(i => i.x === newX && i.y === newY);
+            if (itemIndex >= 0) {
+                pickupItem(itemIndex);
+            }
+            
+            // 出口
+            if (tile === '🚪') {
+                nextFloor();
+                return;
+            }
+            
+            // 移动
+            game.map[game.player.y][game.player.x] = '⬛';
+            game.player.x = newX;
+            game.player.y = newY;
+            game.map[newY][newX] = '🧙';
+            
+            // 敌人行动
+            enemyTurn();
+            
+            updateUI();
+        }
+
+        // 战斗
+        function combat(enemyIndex) {
+            const enemy = game.enemies[enemyIndex];
+            
+            // 玩家攻击
+            const playerDamage = Math.max(1, game.atk - enemy.def + randomInt(-2, 2));
+            enemy.hp -= playerDamage;
+            addLog('你对 ' + enemy.name + ' 造成了 ' + playerDamage + ' 点伤害', 'player');
+            
+            if (enemy.hp <= 0) {
+                // 敌人死亡
+                game.map[enemy.y][enemy.x] = '⬛';
+                game.enemies.splice(enemyIndex, 1);
+                
+                const expGain = enemy.exp;
+                const goldGain = enemy.gold;
+                
+                game.exp += expGain;
+                game.gold += goldGain;
+                
+                addLog('击败了 ' + enemy.name + '! 获得 ' + expGain + ' 经验, ' + goldGain + ' 金币', 'item');
+                
+                // 检查升级
+                if (game.exp >= game.expToLevel) {
+                    levelUp();
+                }
+            } else {
+                // 敌人反击
+                const enemyDamage = Math.max(1, enemy.atk - game.def + randomInt(-2, 2));
+                game.hp -= enemyDamage;
+                addLog(enemy.name + ' 对你造成了 ' + enemyDamage + ' 点伤害', 'enemy');
+                
+                if (game.hp <= 0) {
+                    gameOver();
+                }
+            }
+            
+            updateUI();
+        }
+
+        // 拾取物品
+        function pickupItem(itemIndex) {
+            const item = game.items[itemIndex];
+            
+            if (item.type === 'potion') {
+                game.potions++;
+                game.inventory.push(item);
+                addLog('获得 ' + item.name + ' (按空格使用)', 'item');
+            } else if (item.type === 'weapon') {
+                game.atk += item.value;
+                game.inventory.push(item);
+                addLog('装备了 ' + item.name + ', 攻击力 +' + item.value, 'item');
+            } else if (item.type === 'armor') {
+                game.def += item.value;
+                game.inventory.push(item);
+                addLog('装备了 ' + item.name + ', 防御力 +' + item.value, 'item');
+            } else if (item.type === 'gold') {
+                game.gold += item.value;
+                addLog('获得 ' + item.value + ' 金币', 'item');
+            }
+            
+            game.items.splice(itemIndex, 1);
+        }
+
+        // 使用药水
+        function usePotion() {
+            if (game.potions > 0) {
+                const potionIndex = game.inventory.findIndex(i => i.type === 'potion');
+                if (potionIndex >= 0) {
+                    const potion = game.inventory[potionIndex];
+                    const heal = Math.min(potion.value, game.maxHp - game.hp);
+                    game.hp += heal;
+                    game.potions--;
+                    game.inventory.splice(potionIndex, 1);
+                    addLog('使用 ' + potion.name + ', 恢复 ' + heal + ' 生命值', 'item');
+                    updateUI();
+                }
+            }
+        }
+
+        // 升级
+        function levelUp() {
+            game.level++;
+            game.exp -= game.expToLevel;
+            game.expToLevel = Math.floor(game.expToLevel * 1.5);
+            
+            game.maxHp += 20;
+            game.hp = game.maxHp;
+            game.atk += 3;
+            game.def += 2;
+            
+            addLog('升级! 等级 ' + game.level, 'level');
+        }
+
+        // 敌人回合
+        function enemyTurn() {
+            for (const enemy of game.enemies) {
+                // 简单AI：向玩家移动
+                const dx = Math.sign(game.player.x - enemy.x);
+                const dy = Math.sign(game.player.y - enemy.y);
+                
+                // 随机选择移动方向
+                const moveX = Math.random() < 0.5 ? dx : 0;
+                const moveY = moveX === 0 ? dy : 0;
+                
+                const newX = enemy.x + moveX;
+                const newY = enemy.y + moveY;
+                
+                // 检查是否可以移动
+                if (newX >= 0 && newX < CONFIG.MAP_WIDTH && newY >= 0 && newY < CONFIG.MAP_HEIGHT) {
+                    const tile = game.map[newY][newX];
+                    if (tile === '⬛') {
+                        game.map[enemy.y][enemy.x] = '⬛';
+                        enemy.x = newX;
+                        enemy.y = newY;
+                        game.map[newY][newX] = enemy.char;
+                    }
+                }
+            }
+        }
+
+        // 下一层
+        function nextFloor() {
+            game.floor++;
+            addLog('进入第 ' + game.floor + ' 层!', 'level');
+            generateFloor();
+            updateUI();
+        }
+
+        // 游戏结束
+        function gameOver() {
+            game.gameOver = true;
+            
+            const stats = document.getElementById('final-stats');
+            stats.innerHTML = 
+                '<p>到达楼层: ' + game.floor + '</p>' +
+                '<p>角色等级: ' + game.level + '</p>' +
+                '<p>获得金币: ' + game.gold + '</p>' +
+                '<p>击败敌人: ' + (game.level * 10 - 10 + Math.floor(game.exp / 5)) + '</p>';
+            
+            document.getElementById('game-over').style.display = 'block';
+        }
+
+        // 添加日志
+        function addLog(message, type = '') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = message;
+            log.insertBefore(entry, log.firstChild);
+            
+            // 限制日志数量
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // 更新UI
+        function updateUI() {
+            // 更新地图
+            let mapStr = '';
+            for (let y = 0; y < CONFIG.MAP_HEIGHT; y++) {
+                for (let x = 0; x < CONFIG.MAP_WIDTH; x++) {
+                    mapStr += game.map[y][x];
+                }
+                mapStr += '\n';
+            }
+            document.getElementById('game-map').textContent = mapStr;
+            
+            // 更新状态
+            document.getElementById('floor').textContent = game.floor;
+            document.getElementById('level').textContent = game.level;
+            document.getElementById('exp').textContent = game.exp + '/' + game.expToLevel;
+            document.getElementById('hp').textContent = game.hp + '/' + game.maxHp;
+            document.getElementById('hp-bar').style.width = (game.hp / game.maxHp * 100) + '%';
+            document.getElementById('atk').textContent = game.atk;
+            document.getElementById('def').textContent = game.def;
+            document.getElementById('gold').textContent = game.gold;
+            
+            // 更新装备栏
+            const inv = document.getElementById('inventory');
+            inv.innerHTML = '';
+            if (game.potions > 0) {
+                inv.innerHTML += '<div class="inventory-item potion">🧪 x' + game.potions + '</div>';
+            }
+            game.inventory.filter(i => i.type !== 'potion').forEach(item => {
+                inv.innerHTML += '<div class="inventory-item ' + item.type + '">' + item.char + '</div>';
+            });
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    movePlayer(1, 0);
+                    break;
+                case ' ':
+                    usePotion();
+                    break;
+            }
+        });
+
+        // 开始游戏
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            document.getElementById('log-panel').style.display = 'block';
+            document.getElementById('controls').style.display = 'block';
+            initGame();
+        });
+
+        // 重新开始
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('log').innerHTML = '';
+            initGame();
+        });
+    </script>
+</body>
+</html>
