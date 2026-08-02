@@ -6,109 +6,126 @@
     <title>地牢探险</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #e2e8f0; font-family: 'Courier New', monospace; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 8px; overflow: hidden; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #e2e8f0; font-family: 'Courier New', monospace; display: flex; flex-direction: column; padding: 8px; }
         
-        h1 { font-size: 1.2rem; color: #f59e0b; text-shadow: 0 0 10px #f59e0b; margin-bottom: 5px; text-align: center; }
+        h1 { font-size: 1.1rem; color: #f59e0b; text-shadow: 0 0 10px #f59e0b; margin-bottom: 5px; text-align: center; flex-shrink: 0; }
         
-        .game-container { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 100%; height: calc(100vh - 200px); height: calc(100dvh - 200px); }
+        .sound-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; background: rgba(0,0,0,0.5); border: 1px solid #3b82f6; border-radius: 50%; color: white; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; touch-action: manipulation; }
         
-        .game-panel { background: rgba(0, 0, 0, 0.5); border: 2px solid #3b82f6; border-radius: 8px; padding: 8px; }
+        .main-content { flex: 1; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: hidden; position: relative; }
         
-        .map-panel { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .map-wrapper { flex: 1; min-height: 0; background: rgba(0, 0, 0, 0.5); border: 2px solid #3b82f6; border-radius: 8px; overflow: hidden; position: relative; }
         
-        #game-map { font-size: 8px; line-height: 1; letter-spacing: 0; white-space: pre; font-family: monospace; overflow: auto; flex: 1; touch-action: pan-x pan-y; }
+        .map-scroll { width: 100%; height: 100%; overflow: auto; -webkit-overflow-scrolling: touch; display: flex; align-items: center; justify-content: flex-start; padding: 5px; }
         
-        .stats-panel { max-height: 180px; overflow-y: auto; }
+        #game-map { font-size: 14px; line-height: 1; letter-spacing: 1px; white-space: pre; font-family: monospace; transform-origin: top left; touch-action: pan-x pan-y; }
         
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .stats-panel { flex-shrink: 0; max-height: 140px; background: rgba(0, 0, 0, 0.5); border: 2px solid #3b82f6; border-radius: 8px; padding: 6px; overflow-y: auto; }
         
-        .stat-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 11px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 10px; }
         .stat-label { color: #9ca3af; }
         .stat-value { font-weight: bold; }
         
-        .hp-bar { width: 100%; height: 12px; background: #374151; border-radius: 6px; overflow: hidden; margin-top: 3px; }
+        .hp-bar { width: 100%; height: 10px; background: #374151; border-radius: 5px; overflow: hidden; margin-top: 3px; }
         .hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f87171); transition: width 0.3s; }
         
-        .log-panel { height: 60px; overflow-y: auto; font-size: 9px; }
-        .log-entry { padding: 2px 4px; border-bottom: 1px solid #374151; }
+        .inventory { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; justify-content: center; }
+        .inventory-item { background: #374151; padding: 2px 5px; border-radius: 3px; font-size: 8px; }
+        .inventory-item.weapon { border: 1px solid #f59e0b; }
+        .inventory-item.armor { border: 1px solid #3b82f6; }
+        .inventory-item.potion { border: 1px solid #10b981; }
+        
+        .log-panel { flex-shrink: 0; height: 50px; background: rgba(0, 0, 0, 0.5); border: 2px solid #3b82f6; border-radius: 8px; overflow-y: auto; font-size: 8px; padding: 4px; }
+        .log-entry { padding: 1px 3px; border-bottom: 1px solid #374151; }
         .log-entry.player { color: #10b981; }
         .log-entry.enemy { color: #ef4444; }
         .log-entry.item { color: #f59e0b; }
         .log-entry.level { color: #8b5cf6; font-weight: bold; }
         
-        .touch-controls { position: fixed; bottom: 15px; left: 15px; display: none; z-index: 1000; }
+        .touch-controls { position: fixed; bottom: 10px; left: 10px; z-index: 1000; display: none; }
         .touch-controls.visible { display: block; }
-        
-        .dpad { position: relative; width: 120px; height: 120px; }
-        .dpad-btn { position: absolute; width: 40px; height: 40px; background: rgba(59, 130, 246, 0.8); border: 2px solid #3b82f6; border-radius: 8px; color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+        .dpad { position: relative; width: 110px; height: 110px; }
+        .dpad-btn { position: absolute; width: 36px; height: 36px; background: rgba(59, 130, 246, 0.85); border: 2px solid #3b82f6; border-radius: 8px; color: white; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
         .dpad-btn:active { background: rgba(59, 130, 246, 1); transform: scale(0.9); }
-        .dpad-btn.up { top: 0; left: 40px; }
-        .dpad-btn.down { bottom: 0; left: 40px; }
-        .dpad-btn.left { top: 40px; left: 0; }
-        .dpad-btn.right { top: 40px; right: 0; }
+        .dpad-btn.up { top: 0; left: 37px; }
+        .dpad-btn.down { bottom: 0; left: 37px; }
+        .dpad-btn.left { top: 37px; left: 0; }
+        .dpad-btn.right { top: 37px; right: 0; }
         
-        .action-btns { position: fixed; bottom: 15px; right: 15px; display: none; flex-direction: column; gap: 8px; z-index: 1000; }
+        .action-btns { position: fixed; bottom: 10px; right: 10px; z-index: 1000; display: none; flex-direction: column; gap: 6px; }
         .action-btns.visible { display: flex; }
-        .action-btn { width: 50px; height: 50px; background: rgba(16, 185, 129, 0.8); border: 2px solid #10b981; border-radius: 50%; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+        .action-btn { width: 46px; height: 46px; background: rgba(16, 185, 129, 0.85); border: 2px solid #10b981; border-radius: 50%; color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
         .action-btn:active { background: rgba(16, 185, 129, 1); transform: scale(0.9); }
         
-        .legend { display: flex; gap: 6px; flex-wrap: wrap; font-size: 9px; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 2px; }
+        #start-btn, #restart-btn { padding: 10px 25px; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; font-family: inherit; touch-action: manipulation; }
         
-        #start-btn, #restart-btn { padding: 12px 30px; font-size: 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-family: inherit; touch-action: manipulation; }
+        .game-over { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); padding: 15px; border-radius: 10px; text-align: center; border: 3px solid #ef4444; z-index: 2000; display: none; max-width: 85%; }
+        .game-over h2 { color: #ef4444; font-size: 1.1rem; margin-bottom: 8px; }
+        .game-over .final-stats { margin: 8px 0; color: #9ca3af; font-size: 11px; }
         
-        .game-over { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 12px; text-align: center; border: 3px solid #ef4444; z-index: 2000; display: none; max-width: 90%; }
-        .game-over h2 { color: #ef4444; font-size: 1.2rem; margin-bottom: 10px; }
-        .game-over .final-stats { margin: 10px 0; color: #9ca3af; font-size: 12px; }
+        #start-screen { text-align: center; padding: 10px; }
+        #start-screen p { color: #9ca3af; font-size: 11px; margin: 8px 0; }
         
-        .inventory { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; justify-content: center; }
-        .inventory-item { background: #374151; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
-        .inventory-item.weapon { border: 1px solid #f59e0b; }
-        .inventory-item.armor { border: 1px solid #3b82f6; }
-        .inventory-item.potion { border: 1px solid #10b981; }
+        .legend { display: none; }
         
-        .sound-btn { position: fixed; top: 10px; right: 10px; width: 36px; height: 36px; background: rgba(0,0,0,0.5); border: 1px solid #3b82f6; border-radius: 50%; color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; touch-action: manipulation; }
+        @media (min-width: 500px) {
+            h1 { font-size: 1.4rem; }
+            .stats-panel { max-height: 160px; }
+            .stat-row { font-size: 11px; padding: 3px 0; }
+            .dpad { width: 130px; height: 130px; }
+            .dpad-btn { width: 42px; height: 42px; font-size: 16px; }
+            .dpad-btn.up { left: 44px; }
+            .dpad-btn.left { top: 44px; }
+            .action-btn { width: 52px; height: 52px; font-size: 20px; }
+        }
         
         @media (min-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .game-container { height: auto; flex-direction: row; flex-wrap: wrap; justify-content: center; }
-            .map-panel { flex: none; width: 100%; max-width: 100%; height: auto; }
-            #game-map { font-size: 12px; letter-spacing: 1px; }
-            .stats-panel { max-height: none; width: 300px; }
-            .stat-row { font-size: 13px; padding: 5px 0; }
+            h1 { font-size: 1.6rem; }
+            #game-map { font-size: 14px; }
+            .stats-panel { max-height: none; }
+            .stat-row { font-size: 12px; }
+            .log-panel { height: 80px; font-size: 9px; }
             .dpad { width: 150px; height: 150px; }
-            .dpad-btn { width: 50px; height: 50px; font-size: 20px; }
-            .action-btn { width: 60px; height: 60px; font-size: 24px; }
+            .dpad-btn { width: 48px; height: 48px; font-size: 18px; }
+            .dpad-btn.up { left: 51px; }
+            .dpad-btn.left { top: 51px; }
+            .action-btn { width: 56px; height: 56px; font-size: 22px; }
         }
         
         @media (min-width: 1024px) {
-            #game-map { font-size: 14px; }
-            .dpad { width: 160px; height: 160px; }
-            .dpad-btn { width: 52px; height: 52px; }
+            #game-map { font-size: 16px; letter-spacing: 2px; }
         }
         
         @media (max-width: 360px) {
-            #game-map { font-size: 7px; }
-            .dpad { width: 100px; height: 100px; }
-            .dpad-btn { width: 34px; height: 34px; font-size: 14px; }
-            .action-btn { width: 44px; height: 44px; font-size: 18px; }
+            h1 { font-size: 0.95rem; }
+            .dpad { width: 95px; height: 95px; }
+            .dpad-btn { width: 32px; height: 32px; font-size: 12px; }
+            .dpad-btn.up { left: 32px; }
+            .dpad-btn.left { top: 32px; }
+            .action-btn { width: 40px; height: 40px; font-size: 16px; }
+            .stat-row { font-size: 9px; }
+            .inventory-item { font-size: 7px; }
         }
     </style>
 </head>
 <body>
-    <button class="sound-btn" id="sound-btn" title="开关音效">🔊</button>
+    <button class="sound-btn" id="sound-btn">🔊</button>
     <h1>🏰 地牢探险 🏰</h1>
     
     <div id="start-screen">
-        <p style="margin: 10px 0; color: #9ca3af; text-align: center; font-size: 12px;">经典肉鸽地牢探险<br>支持触屏操作</p>
+        <p>经典肉鸽地牢探险<br>支持触屏操作<br>地图可滑动查看</p>
         <button id="start-btn">开始冒险</button>
     </div>
     
-    <div class="game-container" id="game-container" style="display: none;">
-        <div class="game-panel map-panel">
-            <div id="game-map"></div>
+    <div class="main-content" id="game-container" style="display: none;">
+        <div class="map-wrapper">
+            <div class="map-scroll">
+                <div id="game-map"></div>
+            </div>
         </div>
-        <div class="game-panel stats-panel">
+        <div class="stats-panel">
             <div class="stats-grid">
                 <div class="stat-row"><span class="stat-label">楼层</span><span class="stat-value" id="floor">1</span></div>
                 <div class="stat-row"><span class="stat-label">等级</span><span class="stat-value" id="level">1</span></div>
@@ -117,14 +134,11 @@
                 <div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" id="atk">10</span></div>
                 <div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" id="def">5</span></div>
             </div>
-            <div class="stat-row" style="margin-top: 5px;"><span class="stat-label">生命</span><span class="stat-value" id="hp">100/100</span></div>
-            <div class="hp-bar"><div class="hp-fill" id="hp-bar" style="width: 100%"></div></div>
+            <div class="stat-row"><span class="stat-label">生命</span><span class="stat-value" id="hp">100/100</span></div>
+            <div class="hp-bar"><div class="hp-fill" id="hp-bar"></div></div>
             <div class="inventory" id="inventory"></div>
         </div>
-    </div>
-    
-    <div class="game-panel log-panel" id="log-panel" style="display: none;">
-        <div id="log"></div>
+        <div class="log-panel"><div id="log"></div></div>
     </div>
     
     <div class="touch-controls" id="touch-controls">
@@ -137,7 +151,7 @@
     </div>
     
     <div class="action-btns" id="action-btns">
-        <button class="action-btn" id="potion-btn" title="使用药水">🧪</button>
+        <button class="action-btn" id="potion-btn">🧪</button>
     </div>
     
     <div class="game-over" id="game-over">
@@ -149,140 +163,97 @@
     <script>
 // 音频系统
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx = null;
-let soundEnabled = true;
+let audioCtx = null, soundEnabled = true, bgMusicInterval = null;
 
-function initAudio() {
-    if (!audioCtx) audioCtx = new AudioCtx();
-}
+function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
 
 function playSound(type) {
     if (!soundEnabled || !audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
     switch(type) {
-        case 'move':
-            osc.frequency.value = 200;
-            gain.gain.value = 0.05;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-            break;
-        case 'attack':
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-            gain.gain.value = 0.1;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            break;
-        case 'hit':
-            osc.type = 'square';
-            osc.frequency.value = 150;
-            gain.gain.value = 0.1;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
-            break;
-        case 'pickup':
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-            gain.gain.value = 0.08;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            break;
-        case 'levelup':
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
-            osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
-            gain.gain.value = 0.1;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            break;
-        case 'stairs':
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.15);
-            gain.gain.value = 0.1;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-            break;
-        case 'death':
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
-            gain.gain.value = 0.15;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-            break;
-        case 'potion':
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.1);
-            gain.gain.value = 0.08;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            break;
+        case 'move': osc.frequency.value = 200; gain.gain.value = 0.04; osc.start(); osc.stop(now + 0.04); break;
+        case 'attack': osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1); gain.gain.value = 0.08; osc.start(); osc.stop(now + 0.1); break;
+        case 'hit': osc.type = 'square'; osc.frequency.value = 150; gain.gain.value = 0.08; osc.start(); osc.stop(now + 0.08); break;
+        case 'pickup': osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1); gain.gain.value = 0.06; osc.start(); osc.stop(now + 0.1); break;
+        case 'levelup': osc.type = 'sine'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1); osc.frequency.setValueAtTime(784, now + 0.2); gain.gain.value = 0.08; osc.start(); osc.stop(now + 0.3); break;
+        case 'stairs': osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.15); gain.gain.value = 0.08; osc.start(); osc.stop(now + 0.15); break;
+        case 'death': osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.5); gain.gain.value = 0.12; osc.start(); osc.stop(now + 0.5); break;
+        case 'potion': osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.1); gain.gain.value = 0.06; osc.start(); osc.stop(now + 0.1); break;
     }
 }
 
-// 背景音乐
-let bgMusicInterval = null;
 function startBgMusic() {
     if (!audioCtx || bgMusicInterval) return;
     const notes = [262, 294, 330, 349, 392, 349, 330, 294];
     let i = 0;
     bgMusicInterval = setInterval(() => {
         if (!soundEnabled) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = 'sine';
-        osc.frequency.value = notes[i];
-        gain.gain.value = 0.03;
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.2);
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine'; osc.frequency.value = notes[i]; gain.gain.value = 0.02;
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
         i = (i + 1) % notes.length;
     }, 400);
 }
 
-function stopBgMusic() {
-    if (bgMusicInterval) {
-        clearInterval(bgMusicInterval);
-        bgMusicInterval = null;
-    }
-}
+function stopBgMusic() { if (bgMusicInterval) { clearInterval(bgMusicInterval); bgMusicInterval = null; } }
 
-document.getElementById('sound-btn').addEventListener('click', () => {
+document.getElementById('sound-btn').onclick = () => {
     initAudio();
     soundEnabled = !soundEnabled;
     document.getElementById('sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
-    if (soundEnabled && !game.gameOver) startBgMusic();
-    else stopBgMusic();
-});
+    if (soundEnabled && !game.gameOver) startBgMusic(); else stopBgMusic();
+};
+
+// 动态缩放地图
+function scaleMap() {
+    const mapEl = document.getElementById('game-map');
+    const wrapper = mapEl.parentElement.parentElement;
+    const wrapperWidth = wrapper.clientWidth - 10;
+    const wrapperHeight = wrapper.clientHeight - 10;
+    
+    // 计算地图实际尺寸 (每个字符约 8-10px 宽, 行高约 1.2em)
+    const fontSize = parseFloat(getComputedStyle(mapEl).fontSize);
+    const mapWidth = CONFIG.MAP_WIDTH * fontSize * 0.6;
+    const mapHeight = CONFIG.MAP_HEIGHT * fontSize * 1.1;
+    
+    const scaleX = wrapperWidth / mapWidth;
+    const scaleY = wrapperHeight / mapHeight;
+    const scale = Math.min(scaleX, scaleY, 1);
+    
+    if (scale < 1) {
+        mapEl.style.transform = 'scale(' + scale + ')';
+    } else {
+        mapEl.style.transform = 'none';
+    }
+}
+
+window.addEventListener('resize', scaleMap);
 
 const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const CONFIG = {MAP_WIDTH: 40, MAP_HEIGHT: 18, ROOM_MIN_SIZE: 4, ROOM_MAX_SIZE: 7, MAX_ROOMS: 8, NUM_ENEMIES: 4, NUM_ITEMS: 3};
 let game = {map: [], player: null, enemies: [], items: [], exit: null, floor: 1, level: 1, exp: 0, expToLevel: 10, hp: 100, maxHp: 100, atk: 10, def: 5, gold: 0, inventory: [], gameOver: false, potions: 0};
 const ENEMY_TYPES = [{name: '哥布林', char: '👹', hp: 20, atk: 5, def: 2, exp: 5, gold: 10}, {name: '骷髅', char: '💀', hp: 30, atk: 8, def: 3, exp: 8, gold: 15}, {name: '恶龙', char: '🐉', hp: 50, atk: 15, def: 8, exp: 20, gold: 50}];
-const ITEM_TYPES = [{name: '治疗药水', char: '🧪', type: 'potion', effect: 'hp', value: 30}, {name: '铁剑', char: '⚔️', type: 'weapon', effect: 'atk', value: 5}, {name: '铁甲', char: '🛡️', type: 'armor', effect: 'def', value: 3}, {name: '金币堆', char: '💰', type: 'gold', effect: 'gold', value: 20}];
+const ITEM_TYPES = [{name: '治疗药水', char: '🧪', type: 'potion', value: 30}, {name: '铁剑', char: '⚔️', type: 'weapon', value: 5}, {name: '铁甲', char: '🛡️', type: 'armor', value: 3}, {name: '金币', char: '💰', type: 'gold', value: 20}];
 class Room {constructor(x, y, w, h) {this.x = x; this.y = y; this.w = w; this.h = h} get center() {return {x: Math.floor(this.x + this.w / 2), y: Math.floor(this.y + this.h / 2)}}}
 
-function initGame() {
-    game = {map: [], player: null, enemies: [], items: [], exit: null, floor: 1, level: 1, exp: 0, expToLevel: 10, hp: 100, maxHp: 100, atk: 10, def: 5, gold: 0, inventory: [], gameOver: false, potions: 0};
-    generateFloor();
-    updateUI();
-}
+function initGame() {game = {map: [], player: null, enemies: [], items: [], exit: null, floor: 1, level: 1, exp: 0, expToLevel: 10, hp: 100, maxHp: 100, atk: 10, def: 5, gold: 0, inventory: [], gameOver: false, potions: 0}; generateFloor(); updateUI(); setTimeout(scaleMap, 100);}
 
 function generateFloor() {
     game.map = []; game.enemies = []; game.items = [];
     for (let y = 0; y < CONFIG.MAP_HEIGHT; y++) {game.map[y] = []; for (let x = 0; x < CONFIG.MAP_WIDTH; x++) game.map[y][x] = '🧱'}
     const rooms = [];
     for (let i = 0; i < CONFIG.MAX_ROOMS; i++) {
-        const w = randInt(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE), h = randInt(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE), x = randInt(1, CONFIG.MAP_WIDTH - w - 1), y = randInt(1, CONFIG.MAP_HEIGHT - h - 1), room = new Room(x, y, w, h);
+        const w = ri(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE), h = ri(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE), x = ri(1, CONFIG.MAP_WIDTH - w - 1), y = ri(1, CONFIG.MAP_HEIGHT - h - 1), room = new Room(x, y, w, h);
         let overlap = false;
         for (const r of rooms) if (x < r.x + r.w + 1 && x + w + 1 > r.x && y < r.y + r.h + 1 && y + h + 1 > r.y) {overlap = true; break}
         if (!overlap) {rooms.push(room); carveRoom(room)}
     }
-    for (let i = 1; i < rooms.length; i++) {const prev = rooms[i - 1].center, curr = rooms[i].center; if (Math.random() < .5) {carveH(prev.x, curr.x, prev.y); carveV(prev.y, curr.y, curr.x)} else {carveV(prev.y, curr.y, prev.x); carveH(prev.x, curr.x, curr.y)}}
+    for (let i = 1; i < rooms.length; i++) {const p = rooms[i-1].center, c = rooms[i].center; if (Math.random() < .5) {carveH(p.x, c.x, p.y); carveV(p.y, c.y, c.x)} else {carveV(p.y, c.y, p.x); carveH(p.x, c.x, c.y)}}
     if (rooms.length > 0) {const c = rooms[0].center; game.player = {x: c.x, y: c.y}; game.map[c.y][c.x] = '🧙'}
-    if (rooms.length > 1) {const c = rooms[rooms.length - 1].center; game.exit = {x: c.x, y: c.y}; game.map[c.y][c.x] = '🚪'}
+    if (rooms.length > 1) {const c = rooms[rooms.length-1].center; game.exit = {x: c.x, y: c.y}; game.map[c.y][c.x] = '🚪'}
     for (let i = 0; i < CONFIG.NUM_ENEMIES + Math.floor(game.floor * .5); i++) placeEnemy(rooms);
     for (let i = 0; i < CONFIG.NUM_ITEMS + Math.floor(game.floor * .3); i++) placeItem(rooms);
     addLog('进入第' + game.floor + '层', 'level');
@@ -291,10 +262,10 @@ function generateFloor() {
 function carveRoom(r) {for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) game.map[y][x] = '⬛'}
 function carveH(x1, x2, y) {for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) game.map[y][x] = '⬛'}
 function carveV(y1, y2, x) {for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) game.map[y][x] = '⬛'}
-function placeEnemy(rooms) {const pos = getFloor(rooms); if (pos) {let ti = game.floor >= 3 ? randInt(0, 2) : game.floor >= 2 ? randInt(0, 1) : 0; const t = ENEMY_TYPES[ti]; game.enemies.push({x: pos.x, y: pos.y, name: t.name, char: t.char, hp: t.hp + game.floor * 5, maxHp: t.hp + game.floor * 5, atk: t.atk + game.floor * 2, def: t.def + game.floor, exp: t.exp + game.floor, gold: t.gold + game.floor * 5}); game.map[pos.y][pos.x] = t.char}}
-function placeItem(rooms) {const pos = getFloor(rooms); if (pos) {const t = ITEM_TYPES[randInt(0, ITEM_TYPES.length - 1)]; game.items.push({x: pos.x, y: pos.y, name: t.name, char: t.char, type: t.type, effect: t.effect, value: t.value + game.floor * 5}); game.map[pos.y][pos.x] = t.char}}
-function getFloor(rooms) {for (let i = 0; i < 100; i++) {const r = rooms[randInt(0, rooms.length - 1)], x = randInt(r.x, r.x + r.w - 1), y = randInt(r.y, r.y + r.h - 1); if (game.map[y][x] === '⬛') return {x, y}} return null}
-function randInt(min, max) {return Math.floor(Math.random() * (max - min + 1)) + min}
+function placeEnemy(rooms) {const p = getFloor(rooms); if (p) {let ti = game.floor >= 3 ? ri(0,2) : game.floor >= 2 ? ri(0,1) : 0; const t = ENEMY_TYPES[ti]; game.enemies.push({x: p.x, y: p.y, name: t.name, char: t.char, hp: t.hp + game.floor * 5, maxHp: t.hp + game.floor * 5, atk: t.atk + game.floor * 2, def: t.def + game.floor, exp: t.exp + game.floor, gold: t.gold + game.floor * 5}); game.map[p.y][p.x] = t.char}}
+function placeItem(rooms) {const p = getFloor(rooms); if (p) {const t = ITEM_TYPES[ri(0, ITEM_TYPES.length-1)]; game.items.push({x: p.x, y: p.y, name: t.name, char: t.char, type: t.type, value: t.value + game.floor * 5}); game.map[p.y][p.x] = t.char}}
+function getFloor(rooms) {for (let i = 0; i < 100; i++) {const r = rooms[ri(0, rooms.length-1)], x = ri(r.x, r.x + r.w - 1), y = ri(r.y, r.y + r.h - 1); if (game.map[y][x] === '⬛') return {x, y}} return null}
+function ri(min, max) {return Math.floor(Math.random() * (max - min + 1)) + min}
 
 function movePlayer(dx, dy) {
     if (game.gameOver) return;
@@ -317,18 +288,17 @@ function movePlayer(dx, dy) {
 
 function combat(ei) {
     const e = game.enemies[ei];
-    const dmg = Math.max(1, game.atk - e.def + randInt(-2, 2));
+    const dmg = Math.max(1, game.atk - e.def + ri(-2, 2));
     e.hp -= dmg;
     playSound('attack');
     addLog('对' + e.name + '造成' + dmg + '伤害', 'player');
     if (e.hp <= 0) {
-        game.map[e.y][e.x] = '⬛';
-        game.enemies.splice(ei, 1);
+        game.map[e.y][e.x] = '⬛'; game.enemies.splice(ei, 1);
         game.exp += e.exp; game.gold += e.gold;
-        addLog('击败' + e.name + '! +' + e.exp + '经验 +' + e.gold + '金币', 'item');
+        addLog('击败' + e.name, 'item');
         if (game.exp >= game.expToLevel) levelUp();
     } else {
-        const edmg = Math.max(1, e.atk - game.def + randInt(-2, 2));
+        const edmg = Math.max(1, e.atk - game.def + ri(-2, 2));
         game.hp -= edmg;
         playSound('hit');
         addLog(e.name + '造成' + edmg + '伤害', 'enemy');
@@ -340,10 +310,10 @@ function combat(ei) {
 function pickupItem(ii) {
     const it = game.items[ii];
     playSound('pickup');
-    if (it.type === 'potion') {game.potions++; game.inventory.push(it); addLog('获得' + it.name, 'item')}
-    else if (it.type === 'weapon') {game.atk += it.value; game.inventory.push(it); addLog('装备' + it.name + ',攻击力+' + it.value, 'item')}
-    else if (it.type === 'armor') {game.def += it.value; game.inventory.push(it); addLog('装备' + it.name + ',防御力+' + it.value, 'item')}
-    else if (it.type === 'gold') {game.gold += it.value; addLog('获得' + it.value + '金币', 'item')}
+    if (it.type === 'potion') {game.potions++; game.inventory.push(it); addLog('获得药水', 'item')}
+    else if (it.type === 'weapon') {game.atk += it.value; game.inventory.push(it); addLog('装备武器', 'item')}
+    else if (it.type === 'armor') {game.def += it.value; game.inventory.push(it); addLog('装备护甲', 'item')}
+    else if (it.type === 'gold') {game.gold += it.value; addLog('获得金币', 'item')}
     game.items.splice(ii, 1);
 }
 
@@ -356,7 +326,7 @@ function usePotion() {
             const heal = Math.min(p.value, game.maxHp - game.hp);
             game.hp += heal; game.potions--; game.inventory.splice(pi, 1);
             playSound('potion');
-            addLog('使用药水,恢复' + heal + 'HP', 'item');
+            addLog('使用药水恢复' + heal + 'HP', 'item');
             updateUI();
         }
     } else addLog('没有药水', 'enemy');
@@ -380,23 +350,9 @@ function enemyTurn() {
     }
 }
 
-function nextFloor() {
-    game.floor++;
-    playSound('stairs');
-    addLog('进入第' + game.floor + '层!', 'level');
-    generateFloor();
-    updateUI();
-}
-
-function gameOver() {
-    game.gameOver = true;
-    stopBgMusic();
-    playSound('death');
-    document.getElementById('final-stats').innerHTML = '<p>到达楼层:' + game.floor + '</p><p>角色等级:' + game.level + '</p><p>获得金币:' + game.gold + '</p>';
-    document.getElementById('game-over').style.display = 'block';
-}
-
-function addLog(m, t = '') {const l = document.getElementById('log'), e = document.createElement('div'); e.className = 'log-entry ' + t; e.textContent = m; l.insertBefore(e, l.firstChild); while (l.children.length > 30) l.removeChild(l.lastChild)}
+function nextFloor() {game.floor++; playSound('stairs'); addLog('进入第' + game.floor + '层!', 'level'); generateFloor(); updateUI();}
+function gameOver() {game.gameOver = true; stopBgMusic(); playSound('death'); document.getElementById('final-stats').innerHTML = '<p>楼层:' + game.floor + '</p><p>等级:' + game.level + '</p><p>金币:' + game.gold + '</p>'; document.getElementById('game-over').style.display = 'block';}
+function addLog(m, t = '') {const l = document.getElementById('log'), e = document.createElement('div'); e.className = 'log-entry ' + t; e.textContent = m; l.insertBefore(e, l.firstChild); while (l.children.length > 20) l.removeChild(l.lastChild)}
 function updateUI() {
     let s = '';
     for (let y = 0; y < CONFIG.MAP_HEIGHT; y++) {for (let x = 0; x < CONFIG.MAP_WIDTH; x++) s += game.map[y][x]; s += '\n'}
@@ -405,7 +361,7 @@ function updateUI() {
     document.getElementById('level').textContent = game.level;
     document.getElementById('exp').textContent = game.exp + '/' + game.expToLevel;
     document.getElementById('hp').textContent = game.hp + '/' + game.maxHp;
-    document.getElementById('hp-bar').style.width = (game.hp / game.maxHp * 100) + '%';
+    document.getElementById('hp-bar').style.width = Math.max(0, game.hp / game.maxHp * 100) + '%';
     document.getElementById('atk').textContent = game.atk;
     document.getElementById('def').textContent = game.def;
     document.getElementById('gold').textContent = game.gold;
@@ -413,42 +369,30 @@ function updateUI() {
     inv.innerHTML = '';
     if (game.potions > 0) inv.innerHTML += '<div class="inventory-item potion">🧪x' + game.potions + '</div>';
     game.inventory.filter(i => i.type !== 'potion').forEach(i => inv.innerHTML += '<div class="inventory-item ' + i.type + '">' + i.char + '</div>');
+    scaleMap();
 }
 
-document.addEventListener('keydown', e => {
-    switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); e.preventDefault(); break;
-        case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); e.preventDefault(); break;
-        case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); e.preventDefault(); break;
-        case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); e.preventDefault(); break;
-        case ' ': usePotion(); e.preventDefault(); break;
-    }
-});
+document.addEventListener('keydown', e => {switch (e.key) {case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); e.preventDefault(); break; case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); e.preventDefault(); break; case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); e.preventDefault(); break; case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); e.preventDefault(); break; case ' ': usePotion(); e.preventDefault(); break;}});
 
 document.querySelectorAll('.dpad-btn').forEach(b => {
-    b.addEventListener('touchstart', e => {e.preventDefault(); const d = b.dataset.dir; movePlayer(d === 'up' ? 0 : d === 'down' ? 0 : d === 'left' ? -1 : 1, d === 'up' ? -1 : d === 'down' ? 1 : 0)});
-    b.addEventListener('click', () => {const d = b.dataset.dir; movePlayer(d === 'up' ? 0 : d === 'down' ? 0 : d === 'left' ? -1 : 1, d === 'up' ? -1 : d === 'down' ? 1 : 0)});
+    const handler = () => {const d = b.dataset.dir; movePlayer(d === 'up' ? 0 : d === 'down' ? 0 : d === 'left' ? -1 : 1, d === 'up' ? -1 : d === 'down' ? 1 : 0)};
+    b.addEventListener('touchstart', e => {e.preventDefault(); handler()});
+    b.addEventListener('click', handler);
 });
 
 document.getElementById('potion-btn').addEventListener('touchstart', e => {e.preventDefault(); usePotion()});
 document.getElementById('potion-btn').addEventListener('click', usePotion);
 
-document.getElementById('start-btn').addEventListener('click', () => {
+document.getElementById('start-btn').onclick = () => {
     initAudio();
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-container').style.display = 'flex';
-    document.getElementById('log-panel').style.display = 'block';
     if (isTouchDevice) {document.getElementById('touch-controls').classList.add('visible'); document.getElementById('action-btns').classList.add('visible')}
     initGame();
     if (soundEnabled) startBgMusic();
-});
+};
 
-document.getElementById('restart-btn').addEventListener('click', () => {
-    document.getElementById('game-over').style.display = 'none';
-    document.getElementById('log').innerHTML = '';
-    initGame();
-    if (soundEnabled) startBgMusic();
-});
+document.getElementById('restart-btn').onclick = () => {document.getElementById('game-over').style.display = 'none'; document.getElementById('log').innerHTML = ''; initGame(); if (soundEnabled) startBgMusic();};
     </script>
 </body>
 </html>
