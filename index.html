@@ -6,95 +6,127 @@
     <title>地牢探险</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #e2e8f0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 10px; overflow-x: hidden; }
-        h1 { font-size: 1.8rem; color: #f59e0b; text-shadow: 0 0 10px #f59e0b; margin-bottom: 5px; text-align: center; }
-        .game-container { display: flex; gap: 10px; max-width: 100%; flex-direction: column; align-items: center; }
-        .game-panel { background: rgba(0, 0, 0, 0.5); border: 2px solid #3b82f6; border-radius: 10px; padding: 10px; width: 100%; max-width: 800px; }
-        #game-map { font-size: 14px; line-height: 1; letter-spacing: 1px; white-space: pre; font-family: monospace; overflow-x: auto; }
-        .stats-panel { max-width: 400px; }
-        .stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #374151; font-size: 14px; }
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #e2e8f0; font-family: 'Courier New', monospace; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 8px; overflow: hidden; }
+        
+        h1 { font-size: 1.2rem; color: #f59e0b; text-shadow: 0 0 10px #f59e0b; margin-bottom: 5px; text-align: center; }
+        
+        .game-container { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 100%; height: calc(100vh - 200px); height: calc(100dvh - 200px); }
+        
+        .game-panel { background: rgba(0, 0, 0, 0.5); border: 2px solid #3b82f6; border-radius: 8px; padding: 8px; }
+        
+        .map-panel { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        
+        #game-map { font-size: 8px; line-height: 1; letter-spacing: 0; white-space: pre; font-family: monospace; overflow: auto; flex: 1; touch-action: pan-x pan-y; }
+        
+        .stats-panel { max-height: 180px; overflow-y: auto; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        
+        .stat-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 11px; }
         .stat-label { color: #9ca3af; }
         .stat-value { font-weight: bold; }
-        .hp-bar { width: 100%; height: 15px; background: #374151; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        
+        .hp-bar { width: 100%; height: 12px; background: #374151; border-radius: 6px; overflow: hidden; margin-top: 3px; }
         .hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f87171); transition: width 0.3s; }
-        .log-panel { height: 100px; overflow-y: auto; font-size: 11px; }
-        .log-entry { padding: 3px 6px; border-bottom: 1px solid #374151; }
+        
+        .log-panel { height: 60px; overflow-y: auto; font-size: 9px; }
+        .log-entry { padding: 2px 4px; border-bottom: 1px solid #374151; }
         .log-entry.player { color: #10b981; }
         .log-entry.enemy { color: #ef4444; }
         .log-entry.item { color: #f59e0b; }
         .log-entry.level { color: #8b5cf6; font-weight: bold; }
-        .touch-controls { position: fixed; bottom: 20px; left: 20px; display: none; z-index: 1000; }
+        
+        .touch-controls { position: fixed; bottom: 15px; left: 15px; display: none; z-index: 1000; }
         .touch-controls.visible { display: block; }
-        .dpad { position: relative; width: 150px; height: 150px; }
-        .dpad-btn { position: absolute; width: 50px; height: 50px; background: rgba(59, 130, 246, 0.8); border: 2px solid #3b82f6; border-radius: 10px; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
-        .dpad-btn:active { background: rgba(59, 130, 246, 1); transform: scale(0.95); }
-        .dpad-btn.up { top: 0; left: 50px; }
-        .dpad-btn.down { bottom: 0; left: 50px; }
-        .dpad-btn.left { top: 50px; left: 0; }
-        .dpad-btn.right { top: 50px; right: 0; }
-        .action-btns { position: fixed; bottom: 20px; right: 20px; display: none; flex-direction: column; gap: 10px; z-index: 1000; }
+        
+        .dpad { position: relative; width: 120px; height: 120px; }
+        .dpad-btn { position: absolute; width: 40px; height: 40px; background: rgba(59, 130, 246, 0.8); border: 2px solid #3b82f6; border-radius: 8px; color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+        .dpad-btn:active { background: rgba(59, 130, 246, 1); transform: scale(0.9); }
+        .dpad-btn.up { top: 0; left: 40px; }
+        .dpad-btn.down { bottom: 0; left: 40px; }
+        .dpad-btn.left { top: 40px; left: 0; }
+        .dpad-btn.right { top: 40px; right: 0; }
+        
+        .action-btns { position: fixed; bottom: 15px; right: 15px; display: none; flex-direction: column; gap: 8px; z-index: 1000; }
         .action-btns.visible { display: flex; }
-        .action-btn { width: 60px; height: 60px; background: rgba(16, 185, 129, 0.8); border: 2px solid #10b981; border-radius: 50%; color: white; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
-        .action-btn:active { background: rgba(16, 185, 129, 1); transform: scale(0.95); }
-        .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; justify-content: center; font-size: 11px; }
-        .legend-item { display: flex; align-items: center; gap: 3px; }
-        #start-btn, #restart-btn { padding: 15px 40px; font-size: 18px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 10px; cursor: pointer; margin-top: 15px; font-family: inherit; touch-action: manipulation; }
-        .game-over { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); padding: 30px; border-radius: 15px; text-align: center; border: 3px solid #ef4444; z-index: 2000; display: none; max-width: 90%; }
-        .game-over h2 { color: #ef4444; font-size: 1.5rem; margin-bottom: 15px; }
-        .game-over .final-stats { margin: 15px 0; color: #9ca3af; font-size: 14px; }
-        .inventory { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; justify-content: center; }
-        .inventory-item { background: #374151; padding: 4px 8px; border-radius: 5px; font-size: 11px; }
+        .action-btn { width: 50px; height: 50px; background: rgba(16, 185, 129, 0.8); border: 2px solid #10b981; border-radius: 50%; color: white; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; }
+        .action-btn:active { background: rgba(16, 185, 129, 1); transform: scale(0.9); }
+        
+        .legend { display: flex; gap: 6px; flex-wrap: wrap; font-size: 9px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 2px; }
+        
+        #start-btn, #restart-btn { padding: 12px 30px; font-size: 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-family: inherit; touch-action: manipulation; }
+        
+        .game-over { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.95); padding: 20px; border-radius: 12px; text-align: center; border: 3px solid #ef4444; z-index: 2000; display: none; max-width: 90%; }
+        .game-over h2 { color: #ef4444; font-size: 1.2rem; margin-bottom: 10px; }
+        .game-over .final-stats { margin: 10px 0; color: #9ca3af; font-size: 12px; }
+        
+        .inventory { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; justify-content: center; }
+        .inventory-item { background: #374151; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
         .inventory-item.weapon { border: 1px solid #f59e0b; }
         .inventory-item.armor { border: 1px solid #3b82f6; }
         .inventory-item.potion { border: 1px solid #10b981; }
-        @media (min-width: 768px) and (max-width: 1024px) { #game-map { font-size: 16px; } .dpad { width: 180px; height: 180px; } .dpad-btn { width: 60px; height: 60px; font-size: 24px; } .action-btn { width: 70px; height: 70px; font-size: 28px; } }
-        @media (max-width: 767px) { h1 { font-size: 1.3rem; } #game-map { font-size: 10px; letter-spacing: 0; } .stat-row { font-size: 12px; padding: 4px 0; } .dpad { width: 140px; height: 140px; } .dpad-btn { width: 45px; height: 45px; font-size: 18px; } .action-btn { width: 55px; height: 55px; font-size: 20px; } }
-        @media (orientation: landscape) and (max-height: 500px) { h1 { font-size: 1rem; margin-bottom: 2px; } .game-container { flex-direction: row; align-items: flex-start; } .log-panel { display: none; } .touch-controls { bottom: 10px; } .dpad { width: 120px; height: 120px; } .dpad-btn { width: 40px; height: 40px; font-size: 16px; } }
+        
+        .sound-btn { position: fixed; top: 10px; right: 10px; width: 36px; height: 36px; background: rgba(0,0,0,0.5); border: 1px solid #3b82f6; border-radius: 50%; color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; touch-action: manipulation; }
+        
+        @media (min-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .game-container { height: auto; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .map-panel { flex: none; width: 100%; max-width: 100%; height: auto; }
+            #game-map { font-size: 12px; letter-spacing: 1px; }
+            .stats-panel { max-height: none; width: 300px; }
+            .stat-row { font-size: 13px; padding: 5px 0; }
+            .dpad { width: 150px; height: 150px; }
+            .dpad-btn { width: 50px; height: 50px; font-size: 20px; }
+            .action-btn { width: 60px; height: 60px; font-size: 24px; }
+        }
+        
+        @media (min-width: 1024px) {
+            #game-map { font-size: 14px; }
+            .dpad { width: 160px; height: 160px; }
+            .dpad-btn { width: 52px; height: 52px; }
+        }
+        
+        @media (max-width: 360px) {
+            #game-map { font-size: 7px; }
+            .dpad { width: 100px; height: 100px; }
+            .dpad-btn { width: 34px; height: 34px; font-size: 14px; }
+            .action-btn { width: 44px; height: 44px; font-size: 18px; }
+        }
     </style>
 </head>
 <body>
+    <button class="sound-btn" id="sound-btn" title="开关音效">🔊</button>
     <h1>🏰 地牢探险 🏰</h1>
+    
     <div id="start-screen">
-        <p style="margin: 15px 0; color: #9ca3af; text-align: center;">经典肉鸽地牢探险游戏<br>支持触屏和键盘操作</p>
+        <p style="margin: 10px 0; color: #9ca3af; text-align: center; font-size: 12px;">经典肉鸽地牢探险<br>支持触屏操作</p>
         <button id="start-btn">开始冒险</button>
     </div>
+    
     <div class="game-container" id="game-container" style="display: none;">
-        <div class="game-panel"><div id="game-map"></div></div>
+        <div class="game-panel map-panel">
+            <div id="game-map"></div>
+        </div>
         <div class="game-panel stats-panel">
-            <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-                <div style="flex: 1; min-width: 150px;">
-                    <div class="stat-row"><span class="stat-label">楼层</span><span class="stat-value" id="floor">1</span></div>
-                    <div class="stat-row"><span class="stat-label">等级</span><span class="stat-value" id="level">1</span></div>
-                    <div class="stat-row"><span class="stat-label">经验</span><span class="stat-value" id="exp">0/10</span></div>
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <div class="stat-row"><span class="stat-label">攻击力</span><span class="stat-value" id="atk">10</span></div>
-                    <div class="stat-row"><span class="stat-label">防御力</span><span class="stat-value" id="def">5</span></div>
-                    <div class="stat-row"><span class="stat-label">金币</span><span class="stat-value" id="gold">0</span></div>
-                </div>
+            <div class="stats-grid">
+                <div class="stat-row"><span class="stat-label">楼层</span><span class="stat-value" id="floor">1</span></div>
+                <div class="stat-row"><span class="stat-label">等级</span><span class="stat-value" id="level">1</span></div>
+                <div class="stat-row"><span class="stat-label">经验</span><span class="stat-value" id="exp">0/10</span></div>
+                <div class="stat-row"><span class="stat-label">金币</span><span class="stat-value" id="gold">0</span></div>
+                <div class="stat-row"><span class="stat-label">攻击</span><span class="stat-value" id="atk">10</span></div>
+                <div class="stat-row"><span class="stat-label">防御</span><span class="stat-value" id="def">5</span></div>
             </div>
-            <div class="stat-row" style="margin-top: 5px;"><span class="stat-label">生命值</span><span class="stat-value" id="hp">100/100</span></div>
+            <div class="stat-row" style="margin-top: 5px;"><span class="stat-label">生命</span><span class="stat-value" id="hp">100/100</span></div>
             <div class="hp-bar"><div class="hp-fill" id="hp-bar" style="width: 100%"></div></div>
-            <h4 style="color: #9ca3af; margin-top: 10px; font-size: 12px;">装备/道具</h4>
             <div class="inventory" id="inventory"></div>
-            <h4 style="color: #9ca3af; margin-top: 10px; font-size: 12px;">图例</h4>
-            <div class="legend">
-                <div class="legend-item"><span>🧙</span>玩家</div>
-                <div class="legend-item"><span>👹</span>哥布林</div>
-                <div class="legend-item"><span>💀</span>骷髅</div>
-                <div class="legend-item"><span>🐉</span>恶龙</div>
-                <div class="legend-item"><span>🧪</span>药水</div>
-                <div class="legend-item"><span>⚔️</span>武器</div>
-                <div class="legend-item"><span>🛡️</span>护甲</div>
-                <div class="legend-item"><span>💰</span>金币</div>
-                <div class="legend-item"><span>🚪</span>出口</div>
-            </div>
         </div>
     </div>
+    
     <div class="game-panel log-panel" id="log-panel" style="display: none;">
-        <h4 style="color: #3b82f6; margin-bottom: 8px; font-size: 12px;">战斗日志</h4>
         <div id="log"></div>
     </div>
+    
     <div class="touch-controls" id="touch-controls">
         <div class="dpad">
             <button class="dpad-btn up" data-dir="up">▲</button>
@@ -103,46 +135,320 @@
             <button class="dpad-btn right" data-dir="right">▶</button>
         </div>
     </div>
+    
     <div class="action-btns" id="action-btns">
         <button class="action-btn" id="potion-btn" title="使用药水">🧪</button>
     </div>
+    
     <div class="game-over" id="game-over">
         <h2>游戏结束</h2>
         <div class="final-stats" id="final-stats"></div>
         <button id="restart-btn">再次挑战</button>
     </div>
+
     <script>
-const isTouchDevice=('ontouchstart'in window)||navigator.maxTouchPoints>0;
-const CONFIG={MAP_WIDTH:40,MAP_HEIGHT:18,ROOM_MIN_SIZE:4,ROOM_MAX_SIZE:7,MAX_ROOMS:8,NUM_ENEMIES:4,NUM_ITEMS:3};
-let game={map:[],player:null,enemies:[],items:[],exit:null,floor:1,level:1,exp:0,expToLevel:10,hp:100,maxHp:100,atk:10,def:5,gold:0,inventory:[],gameOver:false,potions:0};
-const ENEMY_TYPES=[{name:'哥布林',char:'👹',hp:20,atk:5,def:2,exp:5,gold:10},{name:'骷髅',char:'💀',hp:30,atk:8,def:3,exp:8,gold:15},{name:'恶龙',char:'🐉',hp:50,atk:15,def:8,exp:20,gold:50}];
-const ITEM_TYPES=[{name:'治疗药水',char:'🧪',type:'potion',effect:'hp',value:30},{name:'铁剑',char:'⚔️',type:'weapon',effect:'atk',value:5},{name:'铁甲',char:'🛡️',type:'armor',effect:'def',value:3},{name:'金币堆',char:'💰',type:'gold',effect:'gold',value:20}];
-class Room{constructor(x,y,w,h){this.x=x;this.y=y;this.w=w;this.h=h}get center(){return{x:Math.floor(this.x+this.w/2),y:Math.floor(this.y+this.h/2)}}}
-function initGame(){game={map:[],player:null,enemies:[],items:[],exit:null,floor:1,level:1,exp:0,expToLevel:10,hp:100,maxHp:100,atk:10,def:5,gold:0,inventory:[],gameOver:false,potions:0};generateFloor();updateUI()}
-function generateFloor(){game.map=[];game.enemies=[];game.items=[];for(let y=0;y<CONFIG.MAP_HEIGHT;y++){game.map[y]=[];for(let x=0;x<CONFIG.MAP_WIDTH;x++)game.map[y][x]='🧱'}const rooms=[];for(let i=0;i<CONFIG.MAX_ROOMS;i++){const w=randInt(CONFIG.ROOM_MIN_SIZE,CONFIG.ROOM_MAX_SIZE),h=randInt(CONFIG.ROOM_MIN_SIZE,CONFIG.ROOM_MAX_SIZE),x=randInt(1,CONFIG.MAP_WIDTH-w-1),y=randInt(1,CONFIG.MAP_HEIGHT-h-1),room=new Room(x,y,w,h);let overlap=false;for(const r of rooms)if(x<r.x+r.w+1&&x+w+1>r.x&&y<r.y+r.h+1&&y+h+1>r.y){overlap=true;break}if(!overlap){rooms.push(room);carveRoom(room)}}for(let i=1;i<rooms.length;i++){const prev=rooms[i-1].center,curr=rooms[i].center;if(Math.random()<.5){carveH(prev.x,curr.x,prev.y);carveV(prev.y,curr.y,curr.x)}else{carveV(prev.y,curr.y,prev.x);carveH(prev.x,curr.x,curr.y)}}if(rooms.length>0){const c=rooms[0].center;game.player={x:c.x,y:c.y};game.map[c.y][c.x]='🧙'}if(rooms.length>1){const c=rooms[rooms.length-1].center;game.exit={x:c.x,y:c.y};game.map[c.y][c.x]='🚪'}for(let i=0;i<CONFIG.NUM_ENEMIES+Math.floor(game.floor*.5);i++)placeEnemy(rooms);for(let i=0;i<CONFIG.NUM_ITEMS+Math.floor(game.floor*.3);i++)placeItem(rooms);addLog('进入第'+game.floor+'层','level')}
-function carveRoom(r){for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)if(y>=0&&y<CONFIG.MAP_HEIGHT&&x>=0&&x<CONFIG.MAP_WIDTH)game.map[y][x]='⬛'}
-function carveH(x1,x2,y){for(let x=Math.min(x1,x2);x<=Math.max(x1,x2);x++)if(y>=0&&y<CONFIG.MAP_HEIGHT&&x>=0&&x<CONFIG.MAP_WIDTH)game.map[y][x]='⬛'}
-function carveV(y1,y2,x){for(let y=Math.min(y1,y2);y<=Math.max(y1,y2);y++)if(y>=0&&y<CONFIG.MAP_HEIGHT&&x>=0&&x<CONFIG.MAP_WIDTH)game.map[y][x]='⬛'}
-function placeEnemy(rooms){const pos=getFloor(rooms);if(pos){let ti=game.floor>=3?randInt(0,2):game.floor>=2?randInt(0,1):0;const t=ENEMY_TYPES[ti];game.enemies.push({x:pos.x,y:pos.y,name:t.name,char:t.char,hp:t.hp+game.floor*5,maxHp:t.hp+game.floor*5,atk:t.atk+game.floor*2,def:t.def+game.floor,exp:t.exp+game.floor,gold:t.gold+game.floor*5});game.map[pos.y][pos.x]=t.char}}
-function placeItem(rooms){const pos=getFloor(rooms);if(pos){const t=ITEM_TYPES[randInt(0,ITEM_TYPES.length-1)];game.items.push({x:pos.x,y:pos.y,name:t.name,char:t.char,type:t.type,effect:t.effect,value:t.value+game.floor*5});game.map[pos.y][pos.x]=t.char}}
-function getFloor(rooms){for(let i=0;i<100;i++){const r=rooms[randInt(0,rooms.length-1)],x=randInt(r.x,r.x+r.w-1),y=randInt(r.y,r.y+r.h-1);if(game.map[y][x]==='⬛')return{x,y}}return null}
-function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-function movePlayer(dx,dy){if(game.gameOver)return;const nx=game.player.x+dx,ny=game.player.y+dy;if(nx<0||nx>=CONFIG.MAP_WIDTH||ny<0||ny>=CONFIG.MAP_HEIGHT)return;const tile=game.map[ny][nx];if(tile==='🧱')return;const ei=game.enemies.findIndex(e=>e.x===nx&&e.y===ny);if(ei>=0){combat(ei);return}const ii=game.items.findIndex(i=>i.x===nx&&i.y===ny);if(ii>=0)pickupItem(ii);if(game.exit&&nx===game.exit.x&&ny===game.exit.y){nextFloor();return}game.map[game.player.y][game.player.x]='⬛';game.player.x=nx;game.player.y=ny;game.map[ny][nx]='🧙';enemyTurn();updateUI()}
-function combat(ei){const e=game.enemies[ei];const dmg=Math.max(1,game.atk-e.def+randInt(-2,2));e.hp-=dmg;addLog('对'+e.name+'造成'+dmg+'伤害','player');if(e.hp<=0){game.map[e.y][e.x]='⬛';game.enemies.splice(ei,1);game.exp+=e.exp;game.gold+=e.gold;addLog('击败'+e.name+'! +'+e.exp+'经验 +'+e.gold+'金币','item');if(game.exp>=game.expToLevel)levelUp()}else{const edmg=Math.max(1,e.atk-game.def+randInt(-2,2));game.hp-=edmg;addLog(e.name+'造成'+edmg+'伤害','enemy');if(game.hp<=0)gameOver()}updateUI()}
-function pickupItem(ii){const it=game.items[ii];if(it.type==='potion'){game.potions++;game.inventory.push(it);addLog('获得'+it.name+'(点🧪使用)','item')}else if(it.type==='weapon'){game.atk+=it.value;game.inventory.push(it);addLog('装备'+it.name+',攻击力+'+it.value,'item')}else if(it.type==='armor'){game.def+=it.value;game.inventory.push(it);addLog('装备'+it.name+',防御力+'+it.value,'item')}else if(it.type==='gold'){game.gold+=it.value;addLog('获得'+it.value+'金币','item')}game.items.splice(ii,1)}
-function usePotion(){if(game.gameOver)return;if(game.potions>0){const pi=game.inventory.findIndex(i=>i.type==='potion');if(pi>=0){const p=game.inventory[pi];const heal=Math.min(p.value,game.maxHp-game.hp);game.hp+=heal;game.potions--;game.inventory.splice(pi,1);addLog('使用'+p.name+',恢复'+heal+'HP','item');updateUI()}}else addLog('没有药水','enemy')}
-function levelUp(){game.level++;game.exp-=game.expToLevel;game.expToLevel=Math.floor(game.expToLevel*1.5);game.maxHp+=20;game.hp=game.maxHp;game.atk+=3;game.def+=2;addLog('升级!等级'+game.level,'level')}
-function enemyTurn(){for(const e of game.enemies){const dx=Math.sign(game.player.x-e.x),dy=Math.sign(game.player.y-e.y);const mx=Math.random()<.5?dx:0,my=mx===0?dy:0;const nx=e.x+mx,ny=e.y+my;if(nx>=0&&nx<CONFIG.MAP_WIDTH&&ny>=0&&ny<CONFIG.MAP_HEIGHT&&game.map[ny][nx]==='⬛'){game.map[e.y][e.x]='⬛';e.x=nx;e.y=ny;game.map[ny][nx]=e.char}}}
-function nextFloor(){game.floor++;addLog('进入第'+game.floor+'层!','level');generateFloor();updateUI()}
-function gameOver(){game.gameOver=true;document.getElementById('final-stats').innerHTML='<p>到达楼层:'+game.floor+'</p><p>角色等级:'+game.level+'</p><p>获得金币:'+game.gold+'</p>';document.getElementById('game-over').style.display='block'}
-function addLog(m,t=''){const l=document.getElementById('log'),e=document.createElement('div');e.className='log-entry '+t;e.textContent=m;l.insertBefore(e,l.firstChild);while(l.children.length>30)l.removeChild(l.lastChild)}
-function updateUI(){let s='';for(let y=0;y<CONFIG.MAP_HEIGHT;y++){for(let x=0;x<CONFIG.MAP_WIDTH;x++)s+=game.map[y][x];s+='\n'}document.getElementById('game-map').textContent=s;document.getElementById('floor').textContent=game.floor;document.getElementById('level').textContent=game.level;document.getElementById('exp').textContent=game.exp+'/'+game.expToLevel;document.getElementById('hp').textContent=game.hp+'/'+game.maxHp;document.getElementById('hp-bar').style.width=(game.hp/game.maxHp*100)+'%';document.getElementById('atk').textContent=game.atk;document.getElementById('def').textContent=game.def;document.getElementById('gold').textContent=game.gold;const inv=document.getElementById('inventory');inv.innerHTML='';if(game.potions>0)inv.innerHTML+='<div class="inventory-item potion">🧪x'+game.potions+'</div>';game.inventory.filter(i=>i.type!=='potion').forEach(i=>inv.innerHTML+='<div class="inventory-item '+i.type+'">'+i.char+'</div>')}
-document.addEventListener('keydown',e=>{switch(e.key){case'ArrowUp':case'w':case'W':movePlayer(0,-1);e.preventDefault();break;case'ArrowDown':case's':case'S':movePlayer(0,1);e.preventDefault();break;case'ArrowLeft':case'a':case'A':movePlayer(-1,0);e.preventDefault();break;case'ArrowRight':case'd':case'D':movePlayer(1,0);e.preventDefault();break;case' ':usePotion();e.preventDefault();break}});
-document.querySelectorAll('.dpad-btn').forEach(b=>{b.addEventListener('touchstart',e=>{e.preventDefault();const d=b.dataset.dir;movePlayer(d==='up'?0:d==='down'?0:d==='left'?-1:1,d==='up'?-1:d==='down'?1:0)});b.addEventListener('click',()=>{const d=b.dataset.dir;movePlayer(d==='up'?0:d==='down'?0:d==='left'?-1:1,d==='up'?-1:d==='down'?1:0)})});
-document.getElementById('potion-btn').addEventListener('touchstart',e=>{e.preventDefault();usePotion()});document.getElementById('potion-btn').addEventListener('click',usePotion);
-document.getElementById('start-btn').addEventListener('click',()=>{document.getElementById('start-screen').style.display='none';document.getElementById('game-container').style.display='flex';document.getElementById('log-panel').style.display='block';if(isTouchDevice){document.getElementById('touch-controls').classList.add('visible');document.getElementById('action-btns').classList.add('visible')}initGame()});
-document.getElementById('restart-btn').addEventListener('click',()=>{document.getElementById('game-over').style.display='none';document.getElementById('log').innerHTML='';initGame()});
-document.body.addEventListener('touchmove',e=>{if(e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA')e.preventDefault()},{passive:false});
+// 音频系统
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+}
+
+function playSound(type) {
+    if (!soundEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    switch(type) {
+        case 'move':
+            osc.frequency.value = 200;
+            gain.gain.value = 0.05;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+            break;
+        case 'attack':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            gain.gain.value = 0.1;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            break;
+        case 'hit':
+            osc.type = 'square';
+            osc.frequency.value = 150;
+            gain.gain.value = 0.1;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+            break;
+        case 'pickup':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            gain.gain.value = 0.08;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            break;
+        case 'levelup':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+            gain.gain.value = 0.1;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            break;
+        case 'stairs':
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.15);
+            gain.gain.value = 0.1;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+            break;
+        case 'death':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+            gain.gain.value = 0.15;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            break;
+        case 'potion':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.1);
+            gain.gain.value = 0.08;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            break;
+    }
+}
+
+// 背景音乐
+let bgMusicInterval = null;
+function startBgMusic() {
+    if (!audioCtx || bgMusicInterval) return;
+    const notes = [262, 294, 330, 349, 392, 349, 330, 294];
+    let i = 0;
+    bgMusicInterval = setInterval(() => {
+        if (!soundEnabled) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = notes[i];
+        gain.gain.value = 0.03;
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+        i = (i + 1) % notes.length;
+    }, 400);
+}
+
+function stopBgMusic() {
+    if (bgMusicInterval) {
+        clearInterval(bgMusicInterval);
+        bgMusicInterval = null;
+    }
+}
+
+document.getElementById('sound-btn').addEventListener('click', () => {
+    initAudio();
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
+    if (soundEnabled && !game.gameOver) startBgMusic();
+    else stopBgMusic();
+});
+
+const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+const CONFIG = {MAP_WIDTH: 40, MAP_HEIGHT: 18, ROOM_MIN_SIZE: 4, ROOM_MAX_SIZE: 7, MAX_ROOMS: 8, NUM_ENEMIES: 4, NUM_ITEMS: 3};
+let game = {map: [], player: null, enemies: [], items: [], exit: null, floor: 1, level: 1, exp: 0, expToLevel: 10, hp: 100, maxHp: 100, atk: 10, def: 5, gold: 0, inventory: [], gameOver: false, potions: 0};
+const ENEMY_TYPES = [{name: '哥布林', char: '👹', hp: 20, atk: 5, def: 2, exp: 5, gold: 10}, {name: '骷髅', char: '💀', hp: 30, atk: 8, def: 3, exp: 8, gold: 15}, {name: '恶龙', char: '🐉', hp: 50, atk: 15, def: 8, exp: 20, gold: 50}];
+const ITEM_TYPES = [{name: '治疗药水', char: '🧪', type: 'potion', effect: 'hp', value: 30}, {name: '铁剑', char: '⚔️', type: 'weapon', effect: 'atk', value: 5}, {name: '铁甲', char: '🛡️', type: 'armor', effect: 'def', value: 3}, {name: '金币堆', char: '💰', type: 'gold', effect: 'gold', value: 20}];
+class Room {constructor(x, y, w, h) {this.x = x; this.y = y; this.w = w; this.h = h} get center() {return {x: Math.floor(this.x + this.w / 2), y: Math.floor(this.y + this.h / 2)}}}
+
+function initGame() {
+    game = {map: [], player: null, enemies: [], items: [], exit: null, floor: 1, level: 1, exp: 0, expToLevel: 10, hp: 100, maxHp: 100, atk: 10, def: 5, gold: 0, inventory: [], gameOver: false, potions: 0};
+    generateFloor();
+    updateUI();
+}
+
+function generateFloor() {
+    game.map = []; game.enemies = []; game.items = [];
+    for (let y = 0; y < CONFIG.MAP_HEIGHT; y++) {game.map[y] = []; for (let x = 0; x < CONFIG.MAP_WIDTH; x++) game.map[y][x] = '🧱'}
+    const rooms = [];
+    for (let i = 0; i < CONFIG.MAX_ROOMS; i++) {
+        const w = randInt(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE), h = randInt(CONFIG.ROOM_MIN_SIZE, CONFIG.ROOM_MAX_SIZE), x = randInt(1, CONFIG.MAP_WIDTH - w - 1), y = randInt(1, CONFIG.MAP_HEIGHT - h - 1), room = new Room(x, y, w, h);
+        let overlap = false;
+        for (const r of rooms) if (x < r.x + r.w + 1 && x + w + 1 > r.x && y < r.y + r.h + 1 && y + h + 1 > r.y) {overlap = true; break}
+        if (!overlap) {rooms.push(room); carveRoom(room)}
+    }
+    for (let i = 1; i < rooms.length; i++) {const prev = rooms[i - 1].center, curr = rooms[i].center; if (Math.random() < .5) {carveH(prev.x, curr.x, prev.y); carveV(prev.y, curr.y, curr.x)} else {carveV(prev.y, curr.y, prev.x); carveH(prev.x, curr.x, curr.y)}}
+    if (rooms.length > 0) {const c = rooms[0].center; game.player = {x: c.x, y: c.y}; game.map[c.y][c.x] = '🧙'}
+    if (rooms.length > 1) {const c = rooms[rooms.length - 1].center; game.exit = {x: c.x, y: c.y}; game.map[c.y][c.x] = '🚪'}
+    for (let i = 0; i < CONFIG.NUM_ENEMIES + Math.floor(game.floor * .5); i++) placeEnemy(rooms);
+    for (let i = 0; i < CONFIG.NUM_ITEMS + Math.floor(game.floor * .3); i++) placeItem(rooms);
+    addLog('进入第' + game.floor + '层', 'level');
+}
+
+function carveRoom(r) {for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) game.map[y][x] = '⬛'}
+function carveH(x1, x2, y) {for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) game.map[y][x] = '⬛'}
+function carveV(y1, y2, x) {for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) if (y >= 0 && y < CONFIG.MAP_HEIGHT && x >= 0 && x < CONFIG.MAP_WIDTH) game.map[y][x] = '⬛'}
+function placeEnemy(rooms) {const pos = getFloor(rooms); if (pos) {let ti = game.floor >= 3 ? randInt(0, 2) : game.floor >= 2 ? randInt(0, 1) : 0; const t = ENEMY_TYPES[ti]; game.enemies.push({x: pos.x, y: pos.y, name: t.name, char: t.char, hp: t.hp + game.floor * 5, maxHp: t.hp + game.floor * 5, atk: t.atk + game.floor * 2, def: t.def + game.floor, exp: t.exp + game.floor, gold: t.gold + game.floor * 5}); game.map[pos.y][pos.x] = t.char}}
+function placeItem(rooms) {const pos = getFloor(rooms); if (pos) {const t = ITEM_TYPES[randInt(0, ITEM_TYPES.length - 1)]; game.items.push({x: pos.x, y: pos.y, name: t.name, char: t.char, type: t.type, effect: t.effect, value: t.value + game.floor * 5}); game.map[pos.y][pos.x] = t.char}}
+function getFloor(rooms) {for (let i = 0; i < 100; i++) {const r = rooms[randInt(0, rooms.length - 1)], x = randInt(r.x, r.x + r.w - 1), y = randInt(r.y, r.y + r.h - 1); if (game.map[y][x] === '⬛') return {x, y}} return null}
+function randInt(min, max) {return Math.floor(Math.random() * (max - min + 1)) + min}
+
+function movePlayer(dx, dy) {
+    if (game.gameOver) return;
+    const nx = game.player.x + dx, ny = game.player.y + dy;
+    if (nx < 0 || nx >= CONFIG.MAP_WIDTH || ny < 0 || ny >= CONFIG.MAP_HEIGHT) return;
+    const tile = game.map[ny][nx];
+    if (tile === '🧱') return;
+    const ei = game.enemies.findIndex(e => e.x === nx && e.y === ny);
+    if (ei >= 0) {combat(ei); return}
+    const ii = game.items.findIndex(i => i.x === nx && i.y === ny);
+    if (ii >= 0) pickupItem(ii);
+    if (game.exit && nx === game.exit.x && ny === game.exit.y) {nextFloor(); return}
+    game.map[game.player.y][game.player.x] = '⬛';
+    game.player.x = nx; game.player.y = ny;
+    game.map[ny][nx] = '🧙';
+    playSound('move');
+    enemyTurn();
+    updateUI();
+}
+
+function combat(ei) {
+    const e = game.enemies[ei];
+    const dmg = Math.max(1, game.atk - e.def + randInt(-2, 2));
+    e.hp -= dmg;
+    playSound('attack');
+    addLog('对' + e.name + '造成' + dmg + '伤害', 'player');
+    if (e.hp <= 0) {
+        game.map[e.y][e.x] = '⬛';
+        game.enemies.splice(ei, 1);
+        game.exp += e.exp; game.gold += e.gold;
+        addLog('击败' + e.name + '! +' + e.exp + '经验 +' + e.gold + '金币', 'item');
+        if (game.exp >= game.expToLevel) levelUp();
+    } else {
+        const edmg = Math.max(1, e.atk - game.def + randInt(-2, 2));
+        game.hp -= edmg;
+        playSound('hit');
+        addLog(e.name + '造成' + edmg + '伤害', 'enemy');
+        if (game.hp <= 0) gameOver();
+    }
+    updateUI();
+}
+
+function pickupItem(ii) {
+    const it = game.items[ii];
+    playSound('pickup');
+    if (it.type === 'potion') {game.potions++; game.inventory.push(it); addLog('获得' + it.name, 'item')}
+    else if (it.type === 'weapon') {game.atk += it.value; game.inventory.push(it); addLog('装备' + it.name + ',攻击力+' + it.value, 'item')}
+    else if (it.type === 'armor') {game.def += it.value; game.inventory.push(it); addLog('装备' + it.name + ',防御力+' + it.value, 'item')}
+    else if (it.type === 'gold') {game.gold += it.value; addLog('获得' + it.value + '金币', 'item')}
+    game.items.splice(ii, 1);
+}
+
+function usePotion() {
+    if (game.gameOver) return;
+    if (game.potions > 0) {
+        const pi = game.inventory.findIndex(i => i.type === 'potion');
+        if (pi >= 0) {
+            const p = game.inventory[pi];
+            const heal = Math.min(p.value, game.maxHp - game.hp);
+            game.hp += heal; game.potions--; game.inventory.splice(pi, 1);
+            playSound('potion');
+            addLog('使用药水,恢复' + heal + 'HP', 'item');
+            updateUI();
+        }
+    } else addLog('没有药水', 'enemy');
+}
+
+function levelUp() {
+    game.level++; game.exp -= game.expToLevel; game.expToLevel = Math.floor(game.expToLevel * 1.5);
+    game.maxHp += 20; game.hp = game.maxHp; game.atk += 3; game.def += 2;
+    playSound('levelup');
+    addLog('升级!等级' + game.level, 'level');
+}
+
+function enemyTurn() {
+    for (const e of game.enemies) {
+        const dx = Math.sign(game.player.x - e.x), dy = Math.sign(game.player.y - e.y);
+        const mx = Math.random() < .5 ? dx : 0, my = mx === 0 ? dy : 0;
+        const nx = e.x + mx, ny = e.y + my;
+        if (nx >= 0 && nx < CONFIG.MAP_WIDTH && ny >= 0 && ny < CONFIG.MAP_HEIGHT && game.map[ny][nx] === '⬛') {
+            game.map[e.y][e.x] = '⬛'; e.x = nx; e.y = ny; game.map[ny][nx] = e.char;
+        }
+    }
+}
+
+function nextFloor() {
+    game.floor++;
+    playSound('stairs');
+    addLog('进入第' + game.floor + '层!', 'level');
+    generateFloor();
+    updateUI();
+}
+
+function gameOver() {
+    game.gameOver = true;
+    stopBgMusic();
+    playSound('death');
+    document.getElementById('final-stats').innerHTML = '<p>到达楼层:' + game.floor + '</p><p>角色等级:' + game.level + '</p><p>获得金币:' + game.gold + '</p>';
+    document.getElementById('game-over').style.display = 'block';
+}
+
+function addLog(m, t = '') {const l = document.getElementById('log'), e = document.createElement('div'); e.className = 'log-entry ' + t; e.textContent = m; l.insertBefore(e, l.firstChild); while (l.children.length > 30) l.removeChild(l.lastChild)}
+function updateUI() {
+    let s = '';
+    for (let y = 0; y < CONFIG.MAP_HEIGHT; y++) {for (let x = 0; x < CONFIG.MAP_WIDTH; x++) s += game.map[y][x]; s += '\n'}
+    document.getElementById('game-map').textContent = s;
+    document.getElementById('floor').textContent = game.floor;
+    document.getElementById('level').textContent = game.level;
+    document.getElementById('exp').textContent = game.exp + '/' + game.expToLevel;
+    document.getElementById('hp').textContent = game.hp + '/' + game.maxHp;
+    document.getElementById('hp-bar').style.width = (game.hp / game.maxHp * 100) + '%';
+    document.getElementById('atk').textContent = game.atk;
+    document.getElementById('def').textContent = game.def;
+    document.getElementById('gold').textContent = game.gold;
+    const inv = document.getElementById('inventory');
+    inv.innerHTML = '';
+    if (game.potions > 0) inv.innerHTML += '<div class="inventory-item potion">🧪x' + game.potions + '</div>';
+    game.inventory.filter(i => i.type !== 'potion').forEach(i => inv.innerHTML += '<div class="inventory-item ' + i.type + '">' + i.char + '</div>');
+}
+
+document.addEventListener('keydown', e => {
+    switch (e.key) {
+        case 'ArrowUp': case 'w': case 'W': movePlayer(0, -1); e.preventDefault(); break;
+        case 'ArrowDown': case 's': case 'S': movePlayer(0, 1); e.preventDefault(); break;
+        case 'ArrowLeft': case 'a': case 'A': movePlayer(-1, 0); e.preventDefault(); break;
+        case 'ArrowRight': case 'd': case 'D': movePlayer(1, 0); e.preventDefault(); break;
+        case ' ': usePotion(); e.preventDefault(); break;
+    }
+});
+
+document.querySelectorAll('.dpad-btn').forEach(b => {
+    b.addEventListener('touchstart', e => {e.preventDefault(); const d = b.dataset.dir; movePlayer(d === 'up' ? 0 : d === 'down' ? 0 : d === 'left' ? -1 : 1, d === 'up' ? -1 : d === 'down' ? 1 : 0)});
+    b.addEventListener('click', () => {const d = b.dataset.dir; movePlayer(d === 'up' ? 0 : d === 'down' ? 0 : d === 'left' ? -1 : 1, d === 'up' ? -1 : d === 'down' ? 1 : 0)});
+});
+
+document.getElementById('potion-btn').addEventListener('touchstart', e => {e.preventDefault(); usePotion()});
+document.getElementById('potion-btn').addEventListener('click', usePotion);
+
+document.getElementById('start-btn').addEventListener('click', () => {
+    initAudio();
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-container').style.display = 'flex';
+    document.getElementById('log-panel').style.display = 'block';
+    if (isTouchDevice) {document.getElementById('touch-controls').classList.add('visible'); document.getElementById('action-btns').classList.add('visible')}
+    initGame();
+    if (soundEnabled) startBgMusic();
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+    document.getElementById('game-over').style.display = 'none';
+    document.getElementById('log').innerHTML = '';
+    initGame();
+    if (soundEnabled) startBgMusic();
+});
     </script>
 </body>
 </html>
