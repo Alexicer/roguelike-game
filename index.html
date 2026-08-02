@@ -393,6 +393,24 @@ document.getElementById('start-btn').onclick = () => {
 };
 
 document.getElementById('restart-btn').onclick = () => {document.getElementById('game-over').style.display = 'none'; document.getElementById('log').innerHTML = ''; initGame(); if (soundEnabled) startBgMusic();};
+
+function saveGame() {
+    const saveData = {floor: game.floor, level: game.level, exp: game.exp, expToLevel: game.expToLevel, hp: game.hp, maxHp: game.maxHp, atk: game.atk, def: game.def, gold: game.gold, potions: game.potions, inventory: game.inventory};
+    localStorage.setItem('roguelike_save', JSON.stringify(saveData));
+    addLog('游戏已保存', 'level');
+}
+
+function loadGame() {
+    const saveData = localStorage.getItem('roguelike_save');
+    if (saveData) {
+        const d = JSON.parse(saveData);
+        game.floor = d.floor||1; game.level = d.level||1; game.exp = d.exp||0; game.expToLevel = d.expToLevel||10;
+        game.hp = d.hp||100; game.maxHp = d.maxHp||100; game.atk = d.atk||10; game.def = d.def||5;
+        game.gold = d.gold||0; game.potions = d.potions||0; game.inventory = d.inventory||[];
+        generateFloor(); updateUI();
+        addLog('游戏已加载', 'level');
+    } else {addLog('没有存档', 'enemy');}
+}
     </script>
 </body>
 </html>
